@@ -34,6 +34,11 @@ popd
 
 chown -R "$app:www-data" "$install_dir"
 
+# Ensure the app user owns its data directory: a root-owned webui.db (left
+# over from a restore or a manual run as root) makes the SQLite migrations
+# fail on startup with "attempt to write a readonly database".
+chown -R "$app:www-data" "$data_dir"
+
 #=================================================
 # REAPPLY SYSTEM CONFIGURATION
 #=================================================
@@ -54,7 +59,7 @@ ynh_config_add_logrotate
 #=================================================
 ynh_script_progression "Starting $app's systemd service..."
 
-ynh_systemctl --service="$app" --action="start" --wait_until="No requirements found in frontmatter" --timeout=600
+ynh_systemctl --service="$app" --action="start" --wait_until="Application startup complete." --timeout=600
 
 #=================================================
 # END OF SCRIPT
