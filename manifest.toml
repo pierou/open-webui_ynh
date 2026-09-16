@@ -7,7 +7,7 @@ name = "Open WebUI"
 description.en = "User-friendly AI Interface (Supports Ollama, OpenAI API, ...)"
 description.fr = "Interface IA conviviale (Supporte Ollama, API OpenAI, ...)"
 
-version = "0.9.6~ynh1"
+version = "0.11.3~ynh2"
 
 maintainers = ["DeMiro5001"]
 
@@ -49,14 +49,23 @@ ram.runtime = "2G"
 
     [install.admin]
     type = "user"
-    
+
+    [install.rag_embedding_engine]
+    ask.en = "Embedding engine for RAG (document search)"
+    ask.fr = "Moteur d'embedding pour le RAG (recherche documentaire)"
+    help.en = "Use 'ollama' if Ollama is running locally (avoids downloading a ~1GB model). Use 'openai' for OpenAI-compatible APIs (configure the API key in the admin panel after install). Leave empty to use a built-in local model (slow first start)."
+    help.fr = "Utilisez 'ollama' si Ollama tourne localement (évite le téléchargement d'un modèle de ~1Go). Utilisez 'openai' pour les API compatibles OpenAI (configurez la clé API dans le panneau d'administration après l'installation). Laissez vide pour utiliser un modèle local intégré (premier démarrage lent)."
+    type = "select"
+    choices = ["ollama", "openai", ""]
+    default = "ollama"
+
 [resources]
 
     [resources.sources]
 
     [resources.sources.main]
-    url = "https://github.com/open-webui/open-webui/archive/refs/tags/v0.9.6.tar.gz"
-    sha256 = "62ee09360bf45c5c2ea5ba8bf9d43cdc85755edb0c293ab90f1a845111e0cabb"
+    url = "https://github.com/open-webui/open-webui/archive/refs/tags/v0.11.3.tar.gz"
+    sha256 = "08c6c6927f6d9794b9f9cea14f133d19fc4ad0602db87bd64f295af4ae98501f"
 
     autoupdate.strategy = "latest_github_tag"
 
