@@ -7,7 +7,7 @@ name = "Open WebUI"
 description.en = "User-friendly AI Interface (Supports Ollama, OpenAI API, ...)"
 description.fr = "Interface IA conviviale (Supporte Ollama, API OpenAI, ...)"
 
-version = "0.11.3~ynh2"
+version = "0.11.3~ynh3"
 
 maintainers = ["DeMiro5001"]
 
@@ -57,6 +57,7 @@ ram.runtime = "2G"
     help.fr = "Utilisez 'ollama' si Ollama tourne localement (évite le téléchargement d'un modèle de ~1Go). Utilisez 'openai' pour les API compatibles OpenAI (configurez la clé API dans le panneau d'administration après l'installation). Laissez vide pour utiliser un modèle local intégré (premier démarrage lent)."
     type = "select"
     choices = ["ollama", "openai", ""]
+    optional = true
     default = "ollama"
 
 [resources]
