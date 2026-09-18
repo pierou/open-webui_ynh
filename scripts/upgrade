@@ -59,7 +59,11 @@ ynh_config_add_logrotate
 #=================================================
 ynh_script_progression "Starting $app's systemd service..."
 
-ynh_systemctl --service="$app" --action="start" --wait_until="Application startup complete." --timeout=600
+# Do not abort the upgrade when the app hangs after startup (see install
+# script): warn loudly but keep the install so the admin can debug it.
+if ! ynh_systemctl --service="$app" --action="start" --wait_until="Application startup complete." --timeout=600; then
+	ynh_print_warn "The service did not signal readiness ('Application startup complete.') within 600s. Inspect /var/log/$app/$app.log and 'systemctl status $app', and restart it once the cause is fixed."
+fi
 
 #=================================================
 # END OF SCRIPT

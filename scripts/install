@@ -52,7 +52,13 @@ ynh_config_add_nginx
 
 ynh_config_add_systemd
 
-ynh_systemctl --service="$app" --action="start" --wait_until="Application startup complete." --timeout=600
+# Do not abort (and roll back everything) when the app is installed correctly
+# but hangs after startup (e.g. a stale external connection blocking the
+# FastAPI lifespan): keep the install intact so the admin can inspect
+# /var/log/$app/ and systemctl status $app instead of losing the venv.
+if ! ynh_systemctl --service="$app" --action="start" --wait_until="Application startup complete." --timeout=600; then
+	ynh_print_warn "The service did not signal readiness ('Application startup complete.') within 600s. The app is installed: inspect /var/log/$app/$app.log and 'systemctl status $app', and restart it once the cause is fixed."
+fi
 
 yunohost service add "$app" --description="User-friendly AI Interface (Supports Ollama, OpenAI API, ...)" --log="/var/log/$app/$app.log"
 
