@@ -1,0 +1,64 @@
+Subject: [PATCH] fix(config): resolve /api/config session via the shared helper
+
+/api/config re-implements session resolution inline (Authorization header, then
+the `token` cookie). Every other endpoint resolves identity through
+`get_current_user` / `get_verified_user`, which additionally honours
+`request.state.token` -- the channel used when a reverse proxy or SSO front
+door injects credentials (utils/auth.py:357-367).
+
+Consequence: behind such a proxy the browser is a fully authenticated user for
+/api/v1/* yet `/api/config` still sees no identity, so it omits its entire
+authenticated block (main.py:2211-2223) -- including `features.enable_web_search`.
+The chat input gates the web-search control on exactly that key
+(src/lib/components/chat/MessageInput.svelte:805-808), so web search can never
+appear in the UI even when `web.search.enable` is true in the database.
+
+Fix: delegate to `get_optional_verified_user_from_request` (utils/auth.py:555),
+the existing optional-session helper. Payloads for authenticated and anonymous
+callers are otherwise unchanged.
+
+---
+ backend/open_webui/main.py | 24 ++++++------------------
+ 1 file changed, 6 insertions(+), 18 deletions(-)
+
+--- a/backend/open_webui/main.py
++++ b/backend/open_webui/main.py
+@@
+ @app.get('/api/config')
+ async def get_app_config(request: Request):
+-    user = None
+-    token = None
+-
+-    auth_header = request.headers.get('Authorization')
+-    if auth_header:
+-        cred = get_http_authorization_cred(auth_header)
+-        if cred:
+-            token = cred.credentials
+-
+-    if not token and 'token' in request.cookies:
+-        token = request.cookies.get('token')
+-
+-    if token:
+-        try:
+-            data = decode_token(token)
+-        except Exception as e:
+-            log.debug(e)
+-            raise HTTPException(
+-                status_code=status.HTTP_401_UNAUTHORIZED,
+-                detail='Invalid token',
+-            )
+-        if data is not None and 'id' in data:
+-            user = await Users.get_user_by_id(data['id'])
++    # Resolve the session through the shared helper so every identity channel
++    # the rest of the API honours is honoured here too: Bearer, the `token`
++    # cookie, and credentials injected by a reverse proxy / SSO front door
++    # (`request.state`). Anonymous callers must stay anonymous, so a rejection
++    # from the helper degrades to `None` instead of 401.
++    try:
++        user = await get_optional_verified_user_from_request(request)
++    except HTTPException:
++        user = None
+
+Note: add `get_optional_verified_user_from_request` to the existing
+`from open_webui.utils.auth import (...)` list in main.py, alongside
+`get_http_authorization_cred` / `decode_token`.
