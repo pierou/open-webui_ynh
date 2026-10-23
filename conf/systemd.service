@@ -14,7 +14,12 @@ EnvironmentFile=__INSTALL_DIR__/.env
 ExecStart=__INSTALL_DIR__/venv/bin/open-webui serve --host 127.0.0.1 --port __PORT__
 StandardOutput=append:/var/log/__APP__/__APP__.log
 StandardError=inherit
-TimeoutStartSec=300
+# 600s, matching the readiness wait in scripts/install and scripts/upgrade:
+# the first start after an upgrade runs the alembic migrations (0.11.3 ->
+# 0.12.3 adds 8 revisions) and may preload the RAG embedding model, which
+# can exceed 300s on a spinning disk. Type=simple would otherwise SIGTERM a
+# healthy-but-slow startup and the upgrade would report a failed service.
+TimeoutStartSec=600
 
 ### Depending on specificities of your service/app, you may need to tweak these
 ### .. but this should be a good baseline

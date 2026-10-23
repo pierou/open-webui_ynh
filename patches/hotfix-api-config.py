@@ -4,6 +4,23 @@
 Target: /var/www/open-webui/backend/open_webui/main.py  (Open WebUI 0.11.3)
 Refuses to write unless the old block appears exactly once.
 Backup: /root/main.py.bak   Rollback: cp it back + systemctl restart open-webui
+
+STATUS (verified 2026-10-23): DO NOT USE. Two independent reasons.
+1. Wrong file. This tree is NOT the running code. scripts/upgrade runs
+   `venv/bin/pip install open-webui==X`, so the served code is the PyPI wheel
+   in $install_dir/venv/lib/python3.11/site-packages/open_webui/, and
+   conf/systemd.service starts `venv/bin/open-webui serve`. The extracted
+   GitHub tarball under $install_dir/backend/ is inert - ynh_setup_source only
+   auto-applies `patches/<source_id>/*.patch` (i.e. patches/main/), and this
+   file is not there either.
+2. Anchor is stale. v0.12.3 main.py:2303 reads
+   `if data is not None and 'id' in data and await is_valid_token(data, request.app.state.redis):`
+   so OLD no longer matches and this script aborts safely (untouched file).
+
+The web-search symptom was fixed for real in conf/nginx.conf by clearing the
+inherited ssowat access phase (commit b3d3c7575), which is version-independent.
+Upstream still has NOT fixed /api/config as of v0.12.3 - keep the nginx fix.
+Kept here as the upstream-PR text only.
 """
 import shutil
 
